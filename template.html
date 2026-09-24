@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>国債 投資家別売買動向</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1F4; --panel:#FFFFFF; --ink:#13233A; --muted:#5B6878; --rule:#D3DAE2;
+  --buy:#0E7C74; --sell:#B23A48; --buy-rgb:14,124,116; --sell-rgb:178,58,72;
+  --t1:#1F4E79; --t2:#4F8FC0; --t3:#9CC3E0; --t4:#C9A227; --old:#B7C6D6;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --bg:#0F1826; --panel:#172233; --ink:#E4EAF2; --muted:#9AA8B8; --rule:#2B3A4F;
+  --buy:#3FBFB2; --sell:#E0707D; --buy-rgb:63,191,178; --sell-rgb:224,112,125;
+  --t1:#7FB2E5; --t2:#4F8FC0; --t3:#2F5F8A; --t4:#E0BD4A; --old:#3A4B61; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0F1826; --panel:#172233; --ink:#E4EAF2; --muted:#9AA8B8; --rule:#2B3A4F;
+  --buy:#3FBFB2; --sell:#E0707D; --buy-rgb:63,191,178; --sell-rgb:224,112,125;
+  --t1:#7FB2E5; --t2:#4F8FC0; --t3:#2F5F8A; --t4:#E0BD4A; --old:#3A4B61; color-scheme:dark;}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 64px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans JP","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;font-size:15px;line-height:1.7}
+main{max-width:1160px;margin:0 auto;padding:32px 20px 64px}
+h1{font-size:clamp(1.6rem,3.4vw,2.3rem);line-height:1.25;margin:0 0 6px;font-weight:700}
+h2{font-size:1.25rem;margin:0 0 4px;font-weight:700}
+h3{font-size:1rem;margin:22px 0 4px;font-weight:700}
+h4{margin:0 0 2px;font-size:.9rem;font-weight:700}
+p{margin:0 0 12px;max-width:76ch}
+.sub{color:var(--muted)}
+.legend-sign{display:inline-flex;gap:14px;flex-wrap:wrap;font-size:.9rem;margin-top:4px}
+.sw{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+section{margin-top:44px}
+.bar{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--rule);margin:22px -20px 0;padding:10px 20px;display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center}
+.bar nav{display:flex;gap:14px;flex-wrap:wrap;font-size:.88rem;margin-left:auto}
+.bar nav a{color:var(--muted);text-decoration:none}
+.bar nav a:hover{color:var(--ink);text-decoration:underline}
+.findings{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));border-top:2px solid var(--ink);margin-top:24px}
+.findings div{padding:14px 16px 14px 0;border-bottom:1px solid var(--rule)}
+.findings b{display:block;font-size:1.02rem;line-height:1.5}
+.findings span{color:var(--muted);font-size:.88rem}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+.heat th,.heat td{padding:6px 9px;text-align:right;white-space:nowrap;font-size:.86rem}
+.heat thead th{font-weight:500;color:var(--muted);border-bottom:1px solid var(--rule)}
+.heat tbody th{text-align:left;font-weight:500;position:sticky;left:0;background:var(--bg);z-index:1}
+.heat td.c{cursor:pointer;border:2px solid transparent}
+.heat td.c:focus-visible,.heat td.sel{border-color:var(--ink);outline:none}
+.heat tr.total th,.heat tr.total td{border-top:1px solid var(--ink);font-weight:700}
+.heat tr.other th{color:var(--muted)}
+.heat td.sum{border-left:1px solid var(--rule);font-weight:700}
+.heat small{display:block;font-size:.7rem;opacity:.8;line-height:1.2}
+.panel{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:18px 18px 12px;margin-top:14px}
+.controls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin:4px 0 8px}
+label.f{font-size:.88rem;color:var(--muted);display:flex;gap:8px;align-items:center}
+select,button{font:inherit;font-size:.9rem;color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:4px;padding:5px 10px}
+button{cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+button.primary{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+button[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+select:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--t2);outline-offset:2px}
+.seg{display:inline-flex}.seg button{border-radius:0;margin-left:-1px}.seg button:first-child{border-radius:4px 0 0 4px;margin-left:0}.seg button:last-child{border-radius:0 4px 4px 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{padding:3px 10px;border-radius:14px;font-size:.84rem}
+.chart{position:relative;height:340px}
+.chart.sm{height:210px}
+.mini{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px 20px}
+.mini figure{margin:0}.mini .chart{height:200px}
+.note{font-size:.84rem;color:var(--muted);margin-top:10px}
+.mt th,.mt td{padding:6px 9px;text-align:right;white-space:nowrap;font-size:.84rem;border-bottom:1px solid var(--rule)}
+.mt th:first-child{text-align:left;position:sticky;left:0;background:var(--panel)}
+.mt thead th{color:var(--muted);font-weight:500}
+.mt td.fy{border-left:1px solid var(--rule);font-weight:700}
+.pos{color:var(--buy)}.neg{color:var(--sell)}
+.stats{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:.88rem;margin:6px 0 4px}
+.stats b{font-variant-numeric:tabular-nums}
+.upd{border:1px dashed var(--muted);border-radius:6px;padding:16px 18px;margin-top:14px;background:var(--panel)}
+.upd a{color:inherit}
+footer{margin-top:44px;font-size:.84rem;color:var(--muted);border-top:1px solid var(--rule);padding-top:14px}
+@media (max-width:600px){.chart{height:280px}main{padding:20px 14px 48px}.bar{margin:18px -14px 0;padding:10px 14px}.bar nav{margin-left:0}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<h1>国債の投資家別売買動向</h1>
+<p class="sub" id="period"></p>
+<div class="legend-sign"><span><i class="sw" style="background:var(--buy)"></i>プラス＝買い越し</span><span><i class="sw" style="background:var(--sell)"></i>マイナス＝売り越し</span></div>
+<p class="note">日本証券業協会「公社債店頭売買高」一般売買（現先を除く）の差引額。元データは「売付額−買付額」のため符号を反転しています。単位は億円。</p>
+</header>
+
+<div class="findings" id="findings"></div>
+
+<div class="bar" role="region" aria-label="表示する投資家と年限">
+<label class="f">投資家 <select id="invSel"></select></label>
+<label class="f">年限 <select id="tenSel"></select></label>
+<nav aria-label="セクション"><a href="#fy">年度別</a><a href="#ts">月次推移</a><a href="#season">季節性</a><a href="#last12">直近12か月</a><a href="#cmp">投資家比較</a><a href="#tbl">データ表</a><a href="#about">このサイトについて</a></nav>
+</div>
+
+<section id="fy">
+<h2>年度別の集計</h2>
+<p class="sub">セルを選ぶと、ページ全体の投資家・年限が切り替わります。色の濃さは年限ごとの最大値に対する相対値です（「その他」「合計」は基準から除外）。</p>
+<div class="controls">
+<label class="f">年度 <select id="fySel"></select></label>
+<span class="seg" role="group" aria-label="集計期間"><button id="pFull" aria-pressed="true">通期</button><button id="pSame" aria-pressed="false"></button></span>
+</div>
+<div class="scroll"><table class="heat" id="fyHeat"></table></div>
+<h3 id="fyChartTitle"></h3>
+<div class="panel">
+<div class="mini" id="fyMini"></div>
+<p class="note" id="fyNote"></p>
+</div>
+</section>
+
+<section id="ts">
+<h2 id="tsTitle">月次推移</h2>
+<div class="panel">
+<div class="controls"><span class="seg" role="group" aria-label="表示期間"><button data-span="24" aria-pressed="false">24か月</button><button data-span="60" aria-pressed="true">5年</button><button data-span="0" aria-pressed="false">全期間</button></span></div>
+<h4>利付国債（超長期・長期・中期）</h4>
+<div class="chart"><canvas id="chartTS" aria-label="利付国債の年限別月次買い越し額"></canvas></div>
+<h4 style="margin-top:14px">国庫短期証券等（縦軸は別スケール）</h4>
+<div class="chart sm"><canvas id="chartTB" aria-label="国庫短期証券等の月次買い越し額"></canvas></div>
+<p class="note">棒は月次差引、折れ線は過去12か月合計（右軸）。国庫短期証券等は金額の桁が大きいため別のグラフにしています。</p>
+</div>
+</section>
+
+<section id="season">
+<h2>季節性</h2>
+<p class="sub">年度の月（4月→3月）ごとに、年度をまたいで比較します。同じ月に毎年同じ方向の売買が出ていれば、季節的なパターンの可能性があります。</p>
+<h3 id="sTitle"></h3>
+<div class="panel">
+<div class="stats" id="sStats"></div>
+<div class="controls"><span class="seg" role="group" aria-label="重ねる年度"><button id="sRecent" aria-pressed="true">直近3年度＋最新</button><button id="sAll" aria-pressed="false">全年度</button></span></div>
+<div class="chart"><canvas id="chartS" aria-label="年度月別の買い越し額と平均"></canvas></div>
+<p class="note">棒は全期間の月別平均、折れ線は各年度の実績。</p>
+</div>
+<h3 id="sfTitle"></h3>
+<div class="scroll"><table class="heat" id="sFY"></table></div>
+<h3 id="shTitle"></h3>
+<p class="sub">数字の下は「買い越しになった年数／観測年数」。色は平均値の大きさ（「その他」「合計」は基準から除外）。</p>
+<div class="scroll"><table class="heat" id="sHeat"></table></div>
+</section>
+
+<section id="last12">
+<h2 id="l12Title">直近12か月の実績</h2>
+<p class="sub">最新月から遡った12か月の月次実績を投資家別に並べています。右端は12か月合計と、比較用の前年同期（13〜24か月前）の合計。色は表全体での相対値です。</p>
+<div class="scroll"><table class="heat" id="l12"></table></div>
+</section>
+
+<section id="cmp">
+<h2 id="bTitle">投資家の比較</h2>
+<div class="panel">
+<div class="controls">
+<span class="seg" role="group" aria-label="表示方法"><button id="mMon" aria-pressed="true">月次</button><button id="mCum" aria-pressed="false">年度内累計</button></span>
+</div>
+<div class="chips" id="chips" aria-label="比較する投資家"></div>
+<div class="chart" style="margin-top:12px"><canvas id="chartB" aria-label="投資家比較グラフ"></canvas></div>
+</div>
+</section>
+
+<section id="tbl">
+<h2 id="tTitle">月次データ</h2>
+<div class="panel"><div class="scroll"><table class="mt" id="mt"></table></div></div>
+</section>
+
+<section id="about">
+<h2>このサイトについて</h2>
+<div class="upd">
+<p id="updInfo"></p>
+<p>データは日本証券業協会の<a href="https://www.jsda.or.jp/shiryoshitsu/toukei/tentoubaibai/index.html" rel="noopener">「公社債店頭売買高」</a>のページから毎日自動で確認し、新しい月や訂正が公表されると自動的に反映されます。</p>
+</div>
+</section>
+
+<footer id="foot"></footer>
+</main>
+<script type="application/json" id="jgb-data">__DATA_SLOT__</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+let RAW=JSON.parse(document.getElementById('jgb-data').textContent);
+const EN=['City Banks & Long-Term Credit Banks','Regional Banks','Trust Banks','Fin.Insts. for Agr. & Forestry','2nd Regional','Shinkin Banks','Other Fin.Insts.','Life & Non-Life Insurance Companies','Investment Trusts','Mutual Aid Association of Govt.Offices','Business Corporations','Other Corporations','Foreigners','Individuals','Others','Bond Dealers','Total'];
+const INV=['都市銀行','地方銀行','信託銀行','農林系金融機関','第二地銀協加盟行','信用金庫','その他金融機関','生保・損保','投資信託','官公庁共済組合','事業法人','その他法人','外国人','個人','その他','債券ディーラー','合計'];
+const ORDER=INV.filter(i=>i!=='その他'&&i!=='合計').concat(['その他','合計']);
+const TEN=['超長期','長期','中期','国庫短期証券等','短期除く','国債計'];
+const TLAB={'超長期':'超長期','長期':'長期','中期':'中期','国庫短期証券等':'国庫短期証券等','短期除く':'短期除く計','国債計':'国債計'};
+const FYM=['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月'];
+let D,M,FYS,lastFY,lastFM,lastIdx;
+
+function build(){
+  D={v:{}};
+  INV.forEach((jp,k)=>{const rows=RAW.d[EN[k]];const o={};
+    o['国債計']=rows.map(r=>-r[0]);o['超長期']=rows.map(r=>-r[1]);o['長期']=rows.map(r=>-r[2]);o['中期']=rows.map(r=>-r[3]);
+    o['国庫短期証券等']=rows.map(r=>-r[5]);o['短期除く']=rows.map(r=>-r[0]+r[5]);D.v[jp]=o;});
+  M=RAW.m.map(s=>{const [y,m]=s.split('/').map(Number);return {y,m,fy:m<4?y-1:y,fm:(m+8)%12,ord:y*12+m-1,lab:`${String(y).slice(2)}/${m}`,full:`${y}年${m}月`}});
+  FYS=[...new Set(M.map(o=>o.fy))];lastFY=FYS[FYS.length-1];lastIdx=M.length-1;
+  lastFM=Math.max(...M.filter(o=>o.fy===lastFY).map(o=>o.fm));
+}
+const fyLab=f=>`${f}年度`+(f===lastFY&&lastFM<11?`（4〜${FYM[lastFM]}）`:'')+(f===FYS[0]&&M[0].fm>0?`（${FYM[M[0].fm]}〜）`:'');
+const sum=a=>a.reduce((x,y)=>x+(y||0),0);
+const mean=a=>a.length?sum(a)/a.length:null;
+const fmt=v=>v==null?'–':(v>0?'+':'')+Math.round(v).toLocaleString('ja-JP');
+const cho=v=>Math.abs(v)>=10000?(v>0?'+':'')+(v/10000).toFixed(1)+'兆円':fmt(v)+'億円';
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let st={inv:'外国人',tenor:'短期除く',fy:null,same:false,span:60,sAll:false,mode:'mon',cmp:new Set(['外国人','信託銀行','生保・損保','都市銀行','地方銀行'])};
+
+const fyTot=(i,t,fy,same)=>sum(D.v[i][t].filter((_,k)=>M[k].fy===fy&&(!same||M[k].fm<=lastFM)));
+const byFM=(i,t)=>{const g=Array.from({length:12},()=>[]);D.v[i][t].forEach((v,k)=>g[M[k].fm].push(v));return g};
+const idxOf=ord=>M.findIndex(o=>o.ord===ord);
+const winSum=(i,t,from,to)=>sum(D.v[i][t].filter((_,k)=>M[k].ord>=from&&M[k].ord<=to));
+
+function findings(){
+  const f=[],L=M[lastIdx],reg=ORDER.slice(0,15);
+  const comp=FYS.filter(y=>y!==lastFY||lastFM===11).slice(-3);
+  f.push([`外国人（短期除く）${comp.map(y=>cho(fyTot('外国人','短期除く',y))).join(' → ')}`,`${comp[0]}〜${comp[comp.length-1]}年度の推移。${lastFM<11?`${lastFY}年度は4〜${FYM[lastFM]}で${cho(fyTot('外国人','短期除く',lastFY))}`:''}`]);
+  const l12=reg.map(i=>[i,winSum(i,'短期除く',L.ord-11,L.ord)]).sort((a,b)=>b[1]-a[1]);
+  const lo=l12[l12.length-1];f.push([`直近12か月の最大の買い手：${l12[0][0]}（${cho(l12[0][1])}）`,`短期除く。${lo[1]<0?'売り越し最大は':'最も少ないのは'}${lo[0]}（${cho(lo[1])}）`]);
+  const lm=reg.map(i=>[i,D.v[i]['短期除く'][lastIdx]]).sort((a,b)=>b[1]-a[1]);
+  const lo2=lm[lm.length-1];f.push([`${L.full}：${lm[0][0]}が最大の買い越し`,`短期除く${cho(lm[0][1])}。${lo2[1]<0?'売り越し最大は':'最も少ないのは'}${lo2[0]}（${cho(lo2[1])}）`]);
+  let best=null;
+  reg.forEach(i=>['超長期','長期','中期','短期除く'].forEach(t=>{byFM(i,t).forEach((a,k)=>{if(a.length<6)return;const p=a.filter(x=>x>0).length,s=Math.max(p,a.length-p)/a.length,m=Math.abs(mean(a));
+    const score=s*1e9+m;if(s>=.85&&(!best||score>best.score))best={i,t,k,p,n:a.length,m:mean(a),score};})}));
+  if(best)f.push([`季節性：${best.i}の${TLAB[best.t]}は${FYM[best.k]}に${best.m>0?'買い':'売り'}`,`${best.n}年中${best.m>0?best.p:best.n-best.p}年が${best.m>0?'買い越し':'売り越し'}、平均${cho(best.m)}`]);
+  document.getElementById('findings').innerHTML=f.map(([b,s])=>`<div><b>${esc(b)}</b><span>${esc(s)}</span></div>`).join('');
+}
+function colorCell(v,mx){const a=Math.min(Math.abs(v)/mx,1)*0.85;return `background:rgba(${v>=0?css('--buy-rgb'):css('--sell-rgb')},${a.toFixed(3)});${Math.abs(v)/mx>0.55?'color:#fff':''}`}
+function bindCells(tb,fn){tb.querySelectorAll('td.c').forEach(td=>{const go=()=>fn(td);td.addEventListener('click',go);td.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}})})}
+function pick(i,t){st.inv=i;if(t)st.tenor=t;st.cmp.add(i);syncCtl();renderAll();}
+const rowCls=i=>i==='合計'?'total':(i==='その他'?'other':'');
+
+function fyHeat(){
+  const tot={};INV.forEach(i=>{tot[i]={};TEN.forEach(t=>tot[i][t]=fyTot(i,t,st.fy,st.same))});
+  const mx={};TEN.forEach(t=>mx[t]=Math.max(1,...ORDER.slice(0,15).map(i=>Math.abs(tot[i][t]))));
+  let h='<thead><tr><th scope="col" style="text-align:left">投資家</th>'+TEN.map(t=>`<th scope="col">${TLAB[t]}</th>`).join('')+'</tr></thead><tbody>';
+  ORDER.forEach(i=>{const cls=rowCls(i);h+=`<tr class="${cls}"><th scope="row">${i}</th>`;
+    TEN.forEach(t=>{const v=tot[i][t];h+=`<td tabindex="0" class="c ${i===st.inv&&t===st.tenor?'sel':''}" data-i="${i}" data-t="${t}" style="${cls?'':colorCell(v,mx[t])}" aria-label="${i} ${TLAB[t]} ${fmt(v)}億円">${fmt(v)}</td>`});h+='</tr>'});
+  const tb=document.getElementById('fyHeat');tb.innerHTML=h+'</tbody>';bindCells(tb,td=>pick(td.dataset.i,td.dataset.t));
+}
+let charts={};
+function mk(id,cfg){if(charts[id])charts[id].destroy();charts[id]=new Chart(document.getElementById(id),cfg)}
+function opts(extra){
+  const mu=css('--muted'),ru=css('--rule');
+  const o={responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},
+    scales:{x:{grid:{display:false},ticks:{color:mu,maxRotation:0,autoSkipPadding:8}},
+      y:{grid:{color:ru},ticks:{color:mu,callback:v=>v.toLocaleString('ja-JP')},title:{display:true,text:'億円（＋買い越し）',color:mu}}},
+    plugins:{legend:{labels:{color:css('--ink'),boxWidth:12,font:{family:'IBM Plex Sans JP'}}},
+      tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt(c.parsed.y)} 億円`}}}};
+  if(extra)extra(o);return o;
+}
+function renderFY(){
+  const ts=['超長期','長期','中期','短期除く','国庫短期証券等','国債計'];
+  const cols=FYS.map(f=>f===lastFY?css('--t4'):css('--t2'));
+  document.getElementById('fyMini').innerHTML=ts.map((t,k)=>`<figure><h4>${TLAB[t]}</h4><div class="chart"><canvas id="fyc${k}" aria-label="${st.inv} ${TLAB[t]} 年度別"></canvas></div></figure>`).join('');
+  ts.forEach((t,k)=>mk('fyc'+k,{type:'bar',data:{labels:FYS.map(f=>`${String(f).slice(2)}`),datasets:[{label:TLAB[t],data:FYS.map(f=>fyTot(st.inv,t,f,st.same)),backgroundColor:cols}]},
+    options:opts(o=>{o.plugins.legend.display=false;o.scales.y.title.display=false;o.plugins.tooltip.callbacks.title=c=>fyLab(FYS[c[0].dataIndex])})}));
+  document.getElementById('fyChartTitle').textContent=`${st.inv}：年度別・年限別（横軸は年度、グラフごとに縦軸が異なります）`;
+  document.getElementById('fyNote').textContent=(st.same?`全年度を4〜${FYM[lastFM]}の同じ期間で集計しています。`:`${lastFY}年度（金色）は4〜${FYM[lastFM]}の途中集計です。`)+(M[0].fm>0?` ${FYS[0]}年度は${FYM[M[0].fm]}からのデータです。`:'');
+}
+function tsChart(id,ts,cols){
+  const v=D.v[st.inv];const n=st.span?Math.min(st.span,M.length):M.length;const s0=M.length-n;
+  const tot=M.map((_,k)=>sum(ts.map(t=>v[t][k])));
+  const r12=tot.map((_,k)=>k<11?null:sum(tot.slice(k-11,k+1)));
+  const ds=ts.map(t=>({type:'bar',label:TLAB[t],data:v[t].slice(s0),backgroundColor:cols[t],stack:'s',order:2}));
+  ds.push({type:'line',label:'過去12か月合計（右軸）',data:r12.slice(s0),borderColor:css('--ink'),backgroundColor:css('--ink'),borderWidth:2,pointRadius:0,yAxisID:'y2',order:1});
+  mk(id,{data:{labels:M.slice(s0).map(o=>o.lab),datasets:ds},options:opts(o=>{o.scales.x.stacked=true;
+    o.scales.y2={position:'right',grid:{display:false},ticks:{color:css('--muted'),callback:x=>x.toLocaleString('ja-JP')}};})});
+}
+function renderTS(){
+  document.getElementById('tsTitle').textContent=`月次推移：${st.inv}`;
+  tsChart('chartTS',['超長期','長期','中期'],{'超長期':css('--t1'),'長期':css('--t2'),'中期':css('--t3')});
+  tsChart('chartTB',['国庫短期証券等'],{'国庫短期証券等':css('--t4')});
+}
+function fyRow(i,t,f){const d=Array(12).fill(null);D.v[i][t].forEach((x,j)=>{if(M[j].fy===f)d[M[j].fm]=x});return d}
+function renderSeason(){
+  const g=byFM(st.inv,st.tenor),avg=g.map(mean);
+  const ds=[{type:'bar',label:'全期間の月別平均',data:avg,backgroundColor:avg.map(a=>a>=0?`rgba(${css('--buy-rgb')},.35)`:`rgba(${css('--sell-rgb')},.35)`),order:3}];
+  const show=st.sAll?FYS:FYS.slice(-4);
+  const base=[css('--t3'),css('--t2'),css('--t1')];
+  show.forEach((f,k)=>{const latest=f===lastFY;const c=latest?css('--t4'):(st.sAll?css('--old'):base[k%3]);
+    ds.push({type:'line',label:fyLab(f),data:fyRow(st.inv,st.tenor,f),borderColor:c,backgroundColor:c,borderWidth:latest?2.8:(st.sAll?1.2:1.8),pointRadius:latest?3:2,order:1,spanGaps:false})});
+  document.getElementById('sTitle').textContent=`${st.inv}・${TLAB[st.tenor]}：年度の月別パターン`;
+  const hits=g.map(a=>({n:a.length,p:a.filter(x=>x>0).length}));
+  const cons=hits.map((h,k)=>({k,h})).filter(o=>o.h.n>=4&&(o.h.p/o.h.n>=.85||o.h.p/o.h.n<=.15));
+  const best=avg.indexOf(Math.max(...avg)),worst=avg.indexOf(Math.min(...avg));
+  document.getElementById('sStats').innerHTML=`<span>平均が最も大きい月 <b>${FYM[best]}（${fmt(avg[best])}）</b></span><span>最も小さい月 <b>${FYM[worst]}（${fmt(avg[worst])}）</b></span>`+
+    `<span>ほぼ毎年同じ方向の月（85%以上） <b>${cons.length?cons.map(o=>`${FYM[o.k]}${o.h.p/o.h.n>=.85?'買':'売'}${o.h.p>=o.h.n/2?o.h.p:o.h.n-o.h.p}/${o.h.n}`).join('・'):'なし'}</b></span>`;
+  mk('chartS',{data:{labels:FYM,datasets:ds},options:opts()});
+  // FY x month
+  document.getElementById('sfTitle').textContent=`年度×月の実績：${st.inv}・${TLAB[st.tenor]}`;
+  const rows=FYS.map(f=>fyRow(st.inv,st.tenor,f));
+  const mx=Math.max(1,...rows.flat().filter(x=>x!=null).map(Math.abs));
+  let h='<thead><tr><th scope="col" style="text-align:left">年度</th>'+FYM.map(m=>`<th scope="col">${m}</th>`).join('')+'<th scope="col">年度計</th></tr></thead><tbody>';
+  FYS.forEach((f,r)=>{h+=`<tr><th scope="row">${f}年度</th>`+rows[r].map(x=>`<td style="${x==null?'':colorCell(x,mx)}">${fmt(x)}</td>`).join('')+`<td class="sum">${fmt(sum(rows[r]))}</td></tr>`});
+  h+=`<tr class="total"><th scope="row">平均</th>`+avg.map(a=>`<td>${fmt(a)}</td>`).join('')+`<td class="sum"></td></tr>`;
+  document.getElementById('sFY').innerHTML=h+'</tbody>';
+  // investor x month
+  document.getElementById('shTitle').textContent=`月別平均：投資家×月（${TLAB[st.tenor]}）`;
+  const A={},H={};INV.forEach(i=>{const gg=byFM(i,st.tenor);A[i]=gg.map(mean);H[i]=gg.map(a=>`${a.filter(x=>x>0).length}/${a.length}`)});
+  const mx2=Math.max(1,...ORDER.slice(0,15).flatMap(i=>A[i].map(Math.abs)));
+  h='<thead><tr><th scope="col" style="text-align:left">投資家</th>'+FYM.map(m=>`<th scope="col">${m}</th>`).join('')+'</tr></thead><tbody>';
+  ORDER.forEach(i=>{const cls=rowCls(i);h+=`<tr class="${cls}"><th scope="row">${i}</th>`;
+    A[i].forEach((a,k)=>{h+=`<td tabindex="0" class="c ${i===st.inv?'sel':''}" data-i="${i}" style="${cls?'':colorCell(a,mx2)}" aria-label="${i} ${FYM[k]} 平均${fmt(a)}億円 買い越し${H[i][k]}年">${fmt(a)}<small>${H[i][k]}</small></td>`});h+='</tr>'});
+  const tb=document.getElementById('sHeat');tb.innerHTML=h+'</tbody>';bindCells(tb,td=>pick(td.dataset.i));
+}
+function renderL12(){
+  const L=M[lastIdx].ord;const ks=[];for(let o=L-11;o<=L;o++)ks.push(idxOf(o));
+  document.getElementById('l12Title').textContent=`直近12か月の実績：全投資家×月（${TLAB[st.tenor]}）`;
+  const vals={};ORDER.forEach(i=>vals[i]=ks.map(k=>k<0?null:D.v[i][st.tenor][k]));
+  const mx=Math.max(1,...ORDER.slice(0,15).flatMap(i=>vals[i].filter(x=>x!=null).map(Math.abs)));
+  const tots={};ORDER.forEach(i=>tots[i]=sum(vals[i]));const mxT=Math.max(1,...ORDER.slice(0,15).map(i=>Math.abs(tots[i])));
+  let h='<thead><tr><th scope="col" style="text-align:left">投資家</th>'+ks.map((k,j)=>{const o=L-11+j;return `<th scope="col">${String(Math.floor(o/12)).slice(2)}/${o%12+1}</th>`}).join('')+'<th scope="col">12か月合計</th><th scope="col">前年同期</th></tr></thead><tbody>';
+  ORDER.forEach(i=>{const cls=rowCls(i);h+=`<tr class="${cls}"><th scope="row">${i}</th>`+vals[i].map(x=>`<td tabindex="0" class="c ${i===st.inv?'sel':''}" data-i="${i}" style="${cls||x==null?'':colorCell(x,mx)}">${fmt(x)}</td>`).join('')+
+    `<td class="sum" style="${cls?'':colorCell(tots[i],mxT)}">${fmt(tots[i])}</td><td>${fmt(winSum(i,st.tenor,L-23,L-12))}</td></tr>`});
+  const tb=document.getElementById('l12');tb.innerHTML=h+'</tbody>';bindCells(tb,td=>pick(td.dataset.i));
+}
+const PAL=['--t1','--buy','--sell','--t4','--t2','--muted','--ink','--t3'];
+function renderB(){
+  const n=st.span?Math.min(st.span,M.length):M.length,s0=M.length-n;
+  const ds=[...st.cmp].map((i,k)=>{const d=D.v[i][st.tenor];const c=css(PAL[k%PAL.length]);
+    if(st.mode==='mon')return {type:'bar',label:i,data:d.slice(s0),backgroundColor:c};
+    let s=0;const cd=d.map((x,j)=>{if(M[j].fm===0)s=0;s+=x||0;return s}).slice(s0);
+    return {type:'line',label:i,data:cd,borderColor:c,backgroundColor:c,borderWidth:2,pointRadius:1.5,segment:{borderColor:ctx=>M[s0+ctx.p1DataIndex].fm===0?'transparent':c}};});
+  document.getElementById('bTitle').textContent=`投資家の比較：${TLAB[st.tenor]}（${st.mode==='mon'?'月次':'年度内累計'}、期間は月次推移の設定に連動）`;
+  mk('chartB',{data:{labels:M.slice(s0).map(o=>o.lab),datasets:ds},options:opts()});
+}
+function chips(){
+  const c=document.getElementById('chips');
+  c.innerHTML=INV.filter(i=>i!=='合計').map(i=>`<button aria-pressed="${st.cmp.has(i)}" data-i="${i}">${i}</button>`).join('');
+  c.querySelectorAll('button').forEach(b=>b.onclick=()=>{const i=b.dataset.i;st.cmp.has(i)?st.cmp.delete(i):st.cmp.add(i);chips();renderB();});
+}
+function table(){
+  document.getElementById('tTitle').textContent=`月次データ：${TLAB[st.tenor]}（億円、＋買い越し）`;
+  let h='<thead><tr><th>投資家</th>';
+  M.forEach((o,k)=>{h+=`<th>${o.lab}</th>`;if(o.fm===11||k===lastIdx)h+=`<th>${o.fy}年度計</th>`});
+  h+='</tr></thead><tbody>';
+  ORDER.forEach(i=>{const d=D.v[i][st.tenor];h+=`<tr><th scope="row">${i}</th>`;
+    d.forEach((x,k)=>{h+=`<td class="${x>0?'pos':x<0?'neg':''}">${fmt(x)}</td>`;
+      if(M[k].fm===11||k===lastIdx){const s=fyTot(i,st.tenor,M[k].fy,false);h+=`<td class="fy ${s>0?'pos':s<0?'neg':''}">${fmt(s)}</td>`}});h+='</tr>'});
+  document.getElementById('mt').innerHTML=h+'</tbody>';
+  const w=document.querySelector('#tbl .scroll');w.scrollLeft=w.scrollWidth;
+}
+function syncCtl(){
+  document.getElementById('invSel').value=st.inv;document.getElementById('tenSel').value=st.tenor;document.getElementById('fySel').value=st.fy;
+  [['pFull',!st.same],['pSame',st.same],['mMon',st.mode==='mon'],['mCum',st.mode==='cum'],['sRecent',!st.sAll],['sAll',st.sAll]].forEach(([id,on])=>document.getElementById(id).setAttribute('aria-pressed',on));
+  document.querySelectorAll('[data-span]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.span===st.span));
+}
+function renderAll(){fyHeat();renderFY();renderTS();renderSeason();renderL12();chips();renderB();table();}
+function header(){
+  document.getElementById('period').textContent=`対象期間：${M[0].full}〜${M[lastIdx].full}（${M.length}か月）。最新データは${M[lastIdx].full}。`;
+  document.getElementById('fySel').innerHTML=FYS.map(f=>`<option value="${f}">${fyLab(f)}</option>`).join('');
+  document.getElementById('pSame').textContent=`4〜${FYM[lastFM]}で揃える`;
+  document.getElementById('foot').textContent=`出所：日本証券業協会「公社債店頭売買高」（各年度ファイルのシート「(Ｋ)一般差引」）。額面ベース、億円単位（四捨五入のため合計が合わない場合があります）。「その他」の売付額には公募入札で協会員が落札した額が含まれるため、大幅な売り越しとして表れます。「短期除く計」は国債計から国庫短期証券等を差し引いた値です。`;
+}
+function boot(){
+  build();if(st.fy==null||!FYS.includes(st.fy))st.fy=lastFM===11?lastFY:FYS[FYS.length-2];
+  header();findings();document.getElementById('updInfo').textContent=`最新データ：${M[lastIdx].full}分。サイト更新日時：${RAW.updated||'—'}。`;syncCtl();renderAll();
+}
+function init(){
+  document.getElementById('invSel').innerHTML=INV.map(i=>`<option>${i}</option>`).join('');
+  document.getElementById('tenSel').innerHTML=TEN.map(t=>`<option value="${t}">${TLAB[t]}</option>`).join('');
+  document.getElementById('invSel').onchange=e=>{st.inv=e.target.value;st.cmp.add(st.inv);renderAll()};
+  document.getElementById('tenSel').onchange=e=>{st.tenor=e.target.value;renderAll()};
+  document.getElementById('fySel').onchange=e=>{st.fy=+e.target.value;fyHeat()};
+  document.getElementById('pFull').onclick=()=>{st.same=false;syncCtl();fyHeat();renderFY()};
+  document.getElementById('pSame').onclick=()=>{st.same=true;syncCtl();fyHeat();renderFY()};
+  document.getElementById('sRecent').onclick=()=>{st.sAll=false;syncCtl();renderSeason()};
+  document.getElementById('sAll').onclick=()=>{st.sAll=true;syncCtl();renderSeason()};
+  document.querySelectorAll('[data-span]').forEach(b=>b.onclick=()=>{st.span=+b.dataset.span;syncCtl();renderTS();renderB()});
+  document.getElementById('mMon').onclick=()=>{st.mode='mon';syncCtl();renderB()};
+  document.getElementById('mCum').onclick=()=>{st.mode='cum';syncCtl();renderB()};
+  boot();
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',renderAll);
+  new MutationObserver(renderAll).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+}
+
+if(window.Chart)init();else document.querySelector('main').insertAdjacentHTML('afterbegin','<p class="note">グラフ描画ライブラリを読み込めませんでした。ページを再読み込みしてください。</p>');
+</script>
+</body>
+</html>
